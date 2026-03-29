@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>임분밀도진단카드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#f5f4f0;--card:#ffffff;--text:#1a1a1a;--sub:#6b6b6b;--hint:#9e9e9e;
+--border:#e0ddd6;--red:#d63031;--orange:#e17a00;--green:#27ae60;--blue:#2e86de;
+--red-bg:#ffeaea;--orange-bg:#fff4e0;--green-bg:#e8f8ef;--blue-bg:#e6f0fb;
+--radius:12px;
+}
+@media(prefers-color-scheme:dark){
+:root{
+--bg:#1a1917;--card:#262523;--text:#e8e6e1;--sub:#a09d95;--hint:#706d66;
+--border:#3a3835;--red-bg:#3d1a1a;--orange-bg:#3d2d10;--green-bg:#1a3325;--blue-bg:#1a2a3d;
+}
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{
+font-family:'Noto Sans KR',-apple-system,sans-serif;
+background:var(--bg);color:var(--text);overflow-x:hidden;
+-webkit-text-size-adjust:100%;
+}
+.app{max-width:520px;margin:0 auto;padding:20px 16px 60px;min-height:100dvh}
+
+.title-bar{
+display:flex;align-items:center;justify-content:space-between;
+margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);
+}
+.title-bar h1{font-size:18px;font-weight:700;letter-spacing:-0.3px}
+.title-bar .org{font-size:10px;color:var(--hint);text-align:right;line-height:1.4}
+
+.section{margin-bottom:24px}
+.section-title{font-size:13px;color:var(--sub);font-weight:500;margin-bottom:8px}
+
+.height-control{
+background:var(--card);border-radius:var(--radius);
+padding:16px;border:1px solid var(--border);
+}
+.height-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.height-header .label{font-size:14px;color:var(--sub)}
+.height-header .value{font-size:28px;font-weight:700;letter-spacing:-0.5px}
+.height-header .value span{font-size:16px;font-weight:500;color:var(--sub)}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row .edge{font-size:12px;color:var(--hint);min-width:28px}
+.range-row input[type=range]{
+flex:1;-webkit-appearance:none;appearance:none;height:6px;
+background:var(--border);border-radius:3px;outline:none;
+}
+.range-row input[type=range]::-webkit-slider-thumb{
+-webkit-appearance:none;width:28px;height:28px;border-radius:50%;
+background:var(--text);cursor:pointer;border:3px solid var(--card);
+box-shadow:0 1px 4px rgba(0,0,0,0.2);
+}
+
+.legend{
+display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;
+}
+.legend .item{
+display:flex;align-items:center;gap:5px;
+font-size:12px;color:var(--sub);
+padding:4px 10px;background:var(--card);
+border-radius:20px;border:1px solid var(--border);
+}
+.legend .item .dot{width:10px;height:10px;border-radius:2px}
+
+.card-scale{
+background:var(--card);border-radius:var(--radius);
+padding:16px 12px 16px 12px;border:1px solid var(--border);
+user-select:none;
+}
+
+.axis-row{display:flex;align-items:flex-start;margin-bottom:0}
+.axis-label{
+width:56px;min-width:56px;font-size:11px;color:var(--sub);
+font-weight:500;padding-top:1px;text-align:right;padding-right:8px;line-height:1.3;
+}
+.axis-content{flex:1;position:relative;min-width:0}
+
+.tick-row{position:relative;height:22px}
+.tick-row .tk{
+position:absolute;transform:translateX(-50%);
+font-size:11px;color:var(--sub);top:3px;
+transition:left 0.15s;white-space:nowrap;
+}
+.bar-outer{
+height:48px;border-radius:8px;overflow:hidden;
+cursor:crosshair;position:relative;touch-action:none;
+}
+.bar-outer .seg{
+position:absolute;top:0;height:100%;
+display:flex;align-items:center;justify-content:center;
+font-size:12px;font-weight:700;color:#fff;
+transition:left 0.15s,width 0.15s;
+overflow:hidden;white-space:nowrap;letter-spacing:-0.3px;
+}
+.bnd-row{position:relative;height:24px}
+.bnd-row .bl{
+position:absolute;transform:translateX(-50%);
+font-size:11px;font-weight:700;top:2px;
+transition:left 0.15s;white-space:nowrap;
+}
+.dist-row{position:relative;height:22px}
+.dist-row .dtk{
+position:absolute;transform:translateX(-50%);
+font-size:11px;color:var(--sub);top:3px;
+transition:left 0.15s;
+}
+
+.probe{
+position:absolute;top:0;width:3px;
+background:var(--text);z-index:20;
+pointer-events:none;height:48px;
+border-radius:1px;
+transition:left 0.03s;
+}
+.probe::before{
+content:'';position:absolute;top:-8px;left:-7px;
+width:16px;height:16px;background:var(--text);
+clip-path:polygon(50% 100%,0 0,100% 0);
+}
+.probe-label{
+position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);
+white-space:nowrap;font-size:12px;font-weight:700;
+background:var(--card);border:1px solid var(--border);
+border-radius:8px;padding:3px 10px;
+pointer-events:none;
+}
+
+.result-box{
+border-radius:var(--radius);padding:16px;
+margin-top:16px;border:2px solid var(--border);
+transition:background 0.2s,border-color 0.2s;
+}
+.result-grid{
+display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+margin-bottom:10px;
+}
+.result-cell{text-align:center;padding:6px 0}
+.result-cell .rlabel{font-size:11px;color:var(--sub);margin-bottom:2px}
+.result-cell .rval{font-size:20px;font-weight:700}
+.result-cell .runit{font-size:11px;color:var(--sub)}
+
+.result-verdict{
+text-align:center;padding:10px;
+border-top:1px solid var(--border);
+}
+.result-verdict .vgrade{font-size:22px;font-weight:700;margin-bottom:2px}
+.result-verdict .vaction{font-size:14px;font-weight:500}
+
+.hint{
+font-size:11px;color:var(--hint);margin-top:20px;
+line-height:1.7;text-align:center;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="title-bar">
+<h1>임분밀도진단카드</h1>
+<div class="org">국립산림과학원<br>산림기술경영연구소</div>
+</div>
+
+<div class="section">
+<div class="height-control">
+<div class="height-header">
+<div class="label">우세목 평균 수고</div>
+<div class="value" id="hDisp">15.0 <span>m</span></div>
+</div>
+<div class="range-row">
+<div class="edge">5m</div>
+<input type="range" min="5" max="30" step="0.5" value="15" id="hSlider">
+<div class="edge">30m</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<div class="legend">
+<div class="item"><div class="dot" style="background:#d63031"></div>초과밀 Sr≤14</div>
+<div class="item"><div class="dot" style="background:#e17a00"></div>과밀 15~17</div>
+<div class="item"><div class="dot" style="background:#27ae60"></div>적정 18~21</div>
+<div class="item"><div class="dot" style="background:#2e86de"></div>소밀 Sr≥22</div>
+</div>
+
+<div class="card-scale">
+<div class="axis-row">
+<div class="axis-label">ha당<br>본수</div>
+<div class="axis-content"><div class="tick-row" id="nTicks"></div></div>
+</div>
+<div class="axis-row">
+<div class="axis-label"></div>
+<div class="axis-content" id="barWrap" style="position:relative">
+<div class="bar-outer" id="bar"></div>
+<div class="probe" id="probe" style="display:none"><div class="probe-label" id="probeLabel"></div></div>
+</div>
+</div>
+<div class="axis-row">
+<div class="axis-label"></div>
+<div class="axis-content"><div class="bnd-row" id="bndRow"></div></div>
+</div>
+<div class="axis-row">
+<div class="axis-label">평균<br>간거리</div>
+<div class="axis-content"><div class="dist-row" id="distTicks"></div></div>
+</div>
+</div>
+</div>
+
+<div class="result-box" id="resultBox">
+<div class="result-grid">
+<div class="result-cell">
+<div class="rlabel">ha당 본수</div>
+<div class="rval" id="iN">—</div>
+<div class="runit">본/ha</div>
+</div>
+<div class="result-cell">
+<div class="rlabel">평균간거리</div>
+<div class="rval" id="iDist">—</div>
+<div class="runit">m</div>
+</div>
+<div class="result-cell">
+<div class="rlabel">Sr 지수</div>
+<div class="rval" id="iSr">—</div>
+</div>
+</div>
+<div class="result-verdict">
+<div class="vgrade" id="iGrade">밀도등급 바를 터치하세요</div>
+<div class="vaction" id="iAction"></div>
+</div>
+</div>
+
+<div class="hint">
+Sr = √(10000÷N) ÷ H × 100<br>
+침엽수 범용 기준 · 바를 터치/드래그하여 탐색
+</div>
+
+</div>
+
+<script>
+const hSlider=document.getElementById('hSlider'),hDisp=document.getElementById('hDisp');
+const bar=document.getElementById('bar'),probe=document.getElementById('probe'),probeLabel=document.getElementById('probeLabel');
+const nTicksEl=document.getElementById('nTicks'),bndRow=document.getElementById('bndRow'),distTicksEl=document.getElementById('distTicks');
+const iN=document.getElementById('iN'),iDist=document.getElementById('iDist');
+const iSr=document.getElementById('iSr'),iGrade=document.getElementById('iGrade');
+const iAction=document.getElementById('iAction'),resultBox=document.getElementById('resultBox');
+
+const G=[
+{name:'초과밀',sr:[0,14],col:'#d63031',bg:'var(--red-bg)',act:'즉시 솎아베기 필요'},
+{name:'과밀',sr:[14.01,17],col:'#e17a00',bg:'var(--orange-bg)',act:'솎아베기 시행 권장'},
+{name:'적정',sr:[17.01,21],col:'#27ae60',bg:'var(--green-bg)',act:'현상 유지'},
+{name:'소밀',sr:[21.01,999],col:'#2e86de',bg:'var(--blue-bg)',act:'보식 검토'}
+];
+
+const NMIN=50,NMAX=4000;
+const logMin=Math.log10(NMIN),logMax=Math.log10(NMAX);
+
+function nToPos(n){return(logMax-Math.log10(n))/(logMax-logMin)*100}
+function posToN(pct){return Math.pow(10,logMax-pct/100*(logMax-logMin))}
+function srFromN(n,h){return Math.sqrt(10000/n)/h*100}
+function nFromSr(sr,h){var d=sr*h/100;return 10000/(d*d)}
+function distFromN(n){return Math.sqrt(10000/n)}
+function getG(sr){if(sr<=14)return G[0];if(sr<=17)return G[1];if(sr<=21)return G[2];return G[3]}
+
+function buildBar(){
+var h=parseFloat(hSlider.value);
+hDisp.innerHTML=h.toFixed(1)+' <span>m</span>';
+
+var srBounds=[14,17,21];
+var nBounds=srBounds.map(function(sr){return nFromSr(sr,h)});
+
+var html='';
+var segments=[
+{col:G[0].col,nHi:NMAX,nLo:nBounds[0],label:'초과밀'},
+{col:G[1].col,nHi:nBounds[0],nLo:nBounds[1],label:'과밀'},
+{col:G[2].col,nHi:nBounds[1],nLo:nBounds[2],label:'적정'},
+{col:G[3].col,nHi:nBounds[2],nLo:NMIN,label:'소밀'}
+];
+segments.forEach(function(s){
+var clH=Math.min(s.nHi,NMAX),clL=Math.max(s.nLo,NMIN);
+if(clH<=clL)return;
+var left=nToPos(clH),right=nToPos(clL),w=right-left;
+html+='<div class="seg" style="left:'+left+'%;width:'+w+'%;background:'+s.col+'">'+s.label+'</div>';
+});
+bar.innerHTML=html;
+
+var nTickVals=[100,200,300,500,800,1000,1500,2000,3000];
+var thtml='';
+nTickVals.forEach(function(tv){
+if(tv>=NMIN&&tv<=NMAX){
+var p=nToPos(tv);
+thtml+='<div class="tk" style="left:'+p+'%">'+tv.toLocaleString()+'</div>';
+}
+});
+nTicksEl.innerHTML=thtml;
+
+var bhtml='';
+var bndCols=[G[0].col,G[1].col,G[2].col];
+nBounds.forEach(function(nb,i){
+if(nb>=NMIN&&nb<=NMAX){
+var p=nToPos(nb);
+bhtml+='<div class="bl" style="left:'+p+'%;color:'+bndCols[i]+'">▲'+Math.round(nb).toLocaleString()+'</div>';
+}
+});
+bndRow.innerHTML=bhtml;
+
+var distVals=[2,2.5,3,3.5,4,5,6,7,8,10];
+var dhtml='';
+distVals.forEach(function(dv){
+var nForDist=10000/(dv*dv);
+if(nForDist>=NMIN&&nForDist<=NMAX){
+var p=nToPos(nForDist);
+dhtml+='<div class="dtk" style="left:'+p+'%">'+dv+'</div>';
+}
+});
+distTicksEl.innerHTML=dhtml;
+}
+
+function showProbe(pct){
+var n=posToN(pct);
+var h=parseFloat(hSlider.value);
+var sr=srFromN(n,h);
+var dist=distFromN(n);
+var g=getG(sr);
+
+probe.style.display='block';
+probe.style.left=pct+'%';
+probeLabel.textContent=Math.round(n).toLocaleString()+'본 → '+g.name;
+
+iN.textContent=Math.round(n).toLocaleString();
+iDist.textContent=dist.toFixed(2);
+iSr.textContent=sr.toFixed(1);
+iSr.style.color=g.col;
+iGrade.textContent=g.name+' 밀도';
+iGrade.style.color=g.col;
+iAction.textContent=g.act;
+iAction.style.color=g.col;
+resultBox.style.background=g.bg;
+resultBox.style.borderColor=g.col;
+}
+
+function getPct(e){
+var rect=bar.getBoundingClientRect();
+var cx=e.touches?e.touches[0].clientX:e.clientX;
+return Math.max(0,Math.min(100,(cx-rect.left)/rect.width*100));
+}
+
+var dragging=false;
+bar.addEventListener('mouseenter',function(e){showProbe(getPct(e))});
+bar.addEventListener('mousemove',function(e){showProbe(getPct(e))});
+bar.addEventListener('mouseleave',function(){if(!dragging)probe.style.display='none'});
+bar.addEventListener('mousedown',function(e){dragging=true;showProbe(getPct(e))});
+document.addEventListener('mousemove',function(e){if(dragging)showProbe(getPct(e))});
+document.addEventListener('mouseup',function(){dragging=false});
+bar.addEventListener('touchstart',function(e){e.preventDefault();dragging=true;showProbe(getPct(e))},{passive:false});
+document.addEventListener('touchmove',function(e){if(dragging)showProbe(getPct(e))});
+document.addEventListener('touchend',function(){dragging=false});
+
+hSlider.addEventListener('input',buildBar);
+buildBar();
+</script>
+</body>
+</html>
